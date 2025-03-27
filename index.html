@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fehlermeldungs-Assistent</title>
+  <title>Fehlermeldungs-Assistent V3</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; max-width: 900px; margin: auto; background: #f9f9f9; }
     textarea { width: 100%; height: 200px; padding: 10px; font-family: monospace; font-size: 14px; }
@@ -15,8 +15,8 @@
   </style>
 </head>
 <body>
-  <h1>Fehlermeldungs-Assistent</h1>
-  <p>Füge unten die Fehlermeldung ein. Der Assistent analysiert typische Muster und gibt mögliche Ursachen & Empfehlungen.</p>
+  <h1>Fehlermeldungs-Assistent V3</h1>
+  <p>Füge unten die Fehlermeldung ein. Der Assistent erkennt häufige Muster und gibt mögliche Ursachen & Empfehlungen.</p>
   <textarea id="eingabe" placeholder="Hier Fehlermeldung einfügen..."></textarea><br/>
   <button onclick="analysiereFehler()">Analysieren</button>
   <div id="antwort" class="card" style="display:none;"></div>
@@ -27,24 +27,26 @@
       const ausgabe = document.getElementById('antwort');
       let analyse = 'Fehler konnte nicht automatisch erkannt werden. Bitte manuell prüfen oder erweitere die Eingabe.';
 
-      if (eingabe.includes('550 5.4.316') || eingabe.includes('socket error code 10061')) {
-        analyse = 'Verbindung vom Empfänger abgelehnt (Socket error 10061).\n\nMögliche Ursachen:\n- Mailserver des Empfängers ist offline\n- SMTP-Dienst nicht aktiv\n- Firewall blockiert Port 25\n\nEmpfohlene Schritte:\n- Empfänger kontaktieren und auf das Problem hinweisen\n- Fehlertext weiterleiten\n- Erneuten Versand später versuchen';
+      if (eingabe.includes('aadsts50020') || (eingabe.includes('user account') && eingabe.includes('does not exist in tenant'))) {
+        analyse = 'Azure AD Fehler: Der Benutzer ist im Ziel-Tenant nicht bekannt (AADSTS50020).\n\nMögliche Ursachen:\n- Der Benutzer wurde nicht als Gast im Ziel-Tenant eingeladen\n\nEmpfohlene Schritte:\n- Ziel-Tenant muss eine Einladung an den Benutzer senden\n- Benutzer muss sich mit dem richtigen Konto erneut anmelden\n\nWeitere Info: https://learn.microsoft.com/en-us/azure/active-directory/develop/reference-aadsts-error-codes#aadsts50020';
+      } else if (eingabe.includes('550 5.4.316') || eingabe.includes('socket error code 10061')) {
+        analyse = 'Verbindung vom Empfänger abgelehnt (Socket error 10061).\n\nMögliche Ursachen:\n- Mailserver des Empfängers ist offline\n- SMTP-Dienst nicht aktiv\n- Firewall blockiert Port 25\n\nEmpfohlene Schritte:\n- Empfänger kontaktieren\n- Fehlertext weiterleiten\n- Später erneut versuchen';
       } else if (eingabe.includes('dns name does not exist')) {
-        analyse = 'DNS-Auflösung fehlgeschlagen.\n\nMögliche Ursachen:\n- Falsche Empfängeradresse\n- Domain existiert nicht (mehr)\n\nEmpfohlene Schritte:\n- Adresse prüfen\n- DNS-Einträge ggf. validieren';
+        analyse = 'DNS-Auflösung fehlgeschlagen.\n\nMögliche Ursachen:\n- Falsche Empfängeradresse\n- Domain existiert nicht (mehr)\n\nEmpfohlene Schritte:\n- Adresse prüfen\n- DNS-Einträge validieren';
       } else if (eingabe.includes('550 5.1.1')) {
-        analyse = 'Empfängeradresse existiert nicht (550 5.1.1).\n\nMögliche Ursachen:\n- Tippfehler\n- Konto wurde gelöscht oder nie angelegt\n\nEmpfohlene Schritte:\n- Adresse prüfen und ggf. beim Empfänger verifizieren';
+        analyse = 'Empfängeradresse existiert nicht (550 5.1.1).\n\nMögliche Ursachen:\n- Tippfehler\n- Konto gelöscht oder nie existiert\n\nEmpfohlene Schritte:\n- Adresse prüfen\n- Empfänger kontaktieren';
       } else if (eingabe.includes('554 5.7.1')) {
-        analyse = 'Relay denied oder Policy Rejection (554 5.7.1).\n\nMögliche Ursachen:\n- Externer Server blockt Versand\n- SPF/DMARC Fehler\n\nEmpfohlene Schritte:\n- Absenderdomain prüfen\n- SPF/DMARC korrekt setzen';
+        analyse = 'Relay denied oder Policy Rejection (554 5.7.1).\n\nMögliche Ursachen:\n- Server blockiert Versand\n- SPF/DMARC Fehler\n\nEmpfohlene Schritte:\n- Absenderdomain & DNS prüfen';
       } else if (eingabe.includes('421 4.3.2')) {
-        analyse = 'Temporärer Fehler vom empfangenden Mailserver (421 4.3.2).\n\nMögliche Ursachen:\n- Server überlastet\n- Wartung oder Netzwerkproblem\n\nEmpfohlene Schritte:\n- Später erneut versuchen\n- Admin des Empfängers kontaktieren';
+        analyse = 'Temporärer Fehler vom Mailserver (421 4.3.2).\n\nMögliche Ursachen:\n- Server überlastet oder in Wartung\n\nEmpfohlene Schritte:\n- Später erneut versuchen\n- Zielserver kontaktieren';
       } else if (eingabe.includes('0x800ccc0e')) {
-        analyse = 'Outlook kann keine Verbindung zum Server herstellen (0x800ccc0e).\n\nMögliche Ursachen:\n- Serveradresse falsch\n- Firewall/Antivirus blockiert Verbindung\n\nEmpfohlene Schritte:\n- Serverdaten prüfen\n- Antivirus/Firewall-Einstellungen checken';
+        analyse = 'Outlook-Fehler (0x800ccc0e) – Verbindung fehlgeschlagen.\n\nMögliche Ursachen:\n- Serveradresse falsch\n- Firewall blockiert Verbindung\n\nEmpfohlene Schritte:\n- Einstellungen prüfen\n- Antivirus kontrollieren';
       } else if (eingabe.includes('access is denied') || eingabe.includes('0x80070005')) {
-        analyse = 'Zugriff verweigert (Access is denied / 0x80070005).\n\nMögliche Ursachen:\n- Fehlende Berechtigungen\n- UAC blockiert Zugriff\n\nEmpfohlene Schritte:\n- Als Admin ausführen\n- NTFS-/Freigabeberechtigungen prüfen';
+        analyse = 'Zugriffsfehler (Access is denied / 0x80070005).\n\nMögliche Ursachen:\n- Fehlende Rechte\n- UAC blockiert\n\nEmpfohlene Schritte:\n- Als Admin ausführen\n- Berechtigungen prüfen';
       } else if (eingabe.includes('object_ref_not_assigned') || eingabe.includes('objects_objref_not_assigned')) {
-        analyse = 'SAP-Fehler: Nullreferenz-Zugriff (OBJECTS_OBJREF_NOT_ASSIGNED).\n\nMögliche Ursachen:\n- Objekt nicht initialisiert\n\nEmpfohlene Schritte:\n- ST22 prüfen (Kurz-Dump)\n- Entwickler kontaktieren';
+        analyse = 'SAP-Fehler: Objekt wurde nicht initialisiert (OBJECTS_OBJREF_NOT_ASSIGNED).\n\nMögliche Ursachen:\n- Nullreferenz in ABAP\n\nEmpfohlene Schritte:\n- ST22 prüfen\n- Entwickler informieren';
       } else if (eingabe.includes('call_function_remote_error')) {
-        analyse = 'SAP-RFC-Fehler (CALL_FUNCTION_REMOTE_ERROR).\n\nMögliche Ursachen:\n- RFC-Verbindung gestört oder falsche RFC-Ziele\n\nEmpfohlene Schritte:\n- SM59 prüfen\n- Netzwerkverbindung kontrollieren';
+        analyse = 'SAP-RFC Fehler (CALL_FUNCTION_REMOTE_ERROR).\n\nMögliche Ursachen:\n- Verbindung fehlgeschlagen\n\nEmpfohlene Schritte:\n- SM59 prüfen\n- Netzwerkverbindung checken';
       }
 
       ausgabe.style.display = 'block';
