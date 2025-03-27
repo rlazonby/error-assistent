@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fehlermeldungs-Assistent</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; background: #f9f9f9; }
+    textarea { width: 100%; height: 200px; padding: 10px; font-family: monospace; font-size: 14px; }
+    button { padding: 10px 20px; margin-top: 10px; }
+    .card { background: white; padding: 15px; margin-top: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); white-space: pre-wrap; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    p { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Fehlermeldungs-Assistent</h1>
+  <p>Füge unten die Fehlermeldung ein. Der Assistent analysiert typische Muster und gibt mögliche Ursachen & Empfehlungen.</p>
+  <textarea id="eingabe" placeholder="Hier Fehlermeldung einfügen..."></textarea><br/>
+  <button onclick="analysiereFehler()">Analysieren</button>
+  <div id="antwort" class="card" style="display:none;"></div>
+
+  <script>
+    function analysiereFehler() {
+      const eingabe = document.getElementById('eingabe').value.toLowerCase();
+      const ausgabe = document.getElementById('antwort');
+      let analyse = 'Fehler konnte nicht automatisch erkannt werden. Bitte manuell prüfen oder erweitere die Eingabe.';
+
+      if (eingabe.includes('550 5.4.316') || eingabe.includes('socket error code 10061')) {
+        analyse = 'Verbindung vom Empfänger abgelehnt (Socket error 10061).\n\nMögliche Ursachen:\n- Mailserver des Empfängers ist offline\n- SMTP-Dienst nicht aktiv\n- Firewall blockiert Port 25\n\nEmpfohlene Schritte:\n- Empfänger kontaktieren und auf das Problem hinweisen\n- Fehlertext weiterleiten\n- Erneuten Versand später versuchen';
+      } else if (eingabe.includes('dns name does not exist')) {
+        analyse = 'DNS-Auflösung fehlgeschlagen.\n\nMögliche Ursachen:\n- Falsche Empfängeradresse\n- Domain existiert nicht (mehr)\n\nEmpfohlene Schritte:\n- Adresse prüfen\n- DNS-Einträge ggf. validieren';
+      } else if (eingabe.includes('smtp; 550 5.1.1')) {
+        analyse = 'Empfängeradresse existiert nicht (550 5.1.1).\n\nMögliche Ursachen:\n- Tippfehler\n- Konto wurde gelöscht oder nie angelegt\n\nEmpfohlene Schritte:\n- Adresse prüfen und ggf. beim Empfänger verifizieren';
+      }
+
+      ausgabe.style.display = 'block';
+      ausgabe.textContent = analyse;
+    }
+  </script>
+</body>
+</html>
